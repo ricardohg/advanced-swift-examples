@@ -32,7 +32,7 @@ public func == <T>(lhs: ListIndex<T>, rhs: ListIndex<T>) -> Bool {
     return lhs.tag == rhs.tag
 }
 
-public struct List<Element>: CollectionType {
+public struct List<Element>: Collection {
     public typealias Index = ListIndex<Element>
     public var startIndex: Index
     public var endIndex: Index

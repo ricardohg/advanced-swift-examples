@@ -13,14 +13,14 @@ protocol Setting {
 
 extension Dictionary {
     
-    init<S:SequenceType
-        where S.Generator.Element == (Key, Value)> (_ sequence:S) {
+    init<S:Sequence> (_ sequence:S)
+        where S.Iterator.Element == (Key, Value) {
         self = [:]
-        self.merge(sequence)
+        self.merge(other: sequence)
     }
     
-    mutating func merge <S:SequenceType
-        where S.Generator.Element == (Key, Value)> (other: S) {
+    mutating func merge <S:Sequence> (other: S)
+        where S.Iterator.Element == (Key, Value) {
         for (k, v) in other {
             self[k] = v
         }
