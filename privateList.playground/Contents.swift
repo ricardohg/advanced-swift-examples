@@ -2,34 +2,32 @@
 
 import UIKit
 
-private enum ListNode<Element> {
-    case End
-    indirect case Node(Element, next:ListNode<Element>)
+fileprivate enum ListNode<Element> {
+    case end
+    indirect case node(Element, next:ListNode<Element>)
     
-    func cons(x:Element) -> ListNode<Element> {
-        return .Node(x, next:self)
+    func cons(_ x:Element) -> ListNode<Element> {
+        return .node(x, next:self)
     }
 }
 
-public struct ListIndex<Element> {
-    private let node: ListNode<Element>
-    private let tag: Int
+public struct ListIndex<Element>: CustomStringConvertible {
+    fileprivate let node: ListNode<Element>
+    fileprivate let tag: Int
     
-}
-
-extension ListIndex: ForwardIndexType {
-    public func successor() -> ListIndex<Element> {
-        switch node {
-        case let .Node(_, next: next):
-            return ListIndex(node: next, tag: tag.predecessor())
-        case .End:
-            fatalError("cannot increment endIndex")
-        }
+    public var description: String {
+        return "ListIndex(\(tag))"
     }
 }
 
-public func == <T>(lhs: ListIndex<T>, rhs: ListIndex<T>) -> Bool {
-    return lhs.tag == rhs.tag
+extension ListIndex: Comparable {
+    public static func == <T>(lhs: ListIndex<T>, rhs: ListIndex<T>) -> Bool {
+        return lhs.tag == rhs.tag
+    }
+    public static func < <T>(lhs: ListIndex<T>, rhs: ListIndex<T>) -> Bool {
+        // startIndex has the highest tag, endIndex the lowest
+        return lhs.tag > rhs.tag
+    }
 }
 
 public struct List<Element>: Collection {
@@ -39,19 +37,34 @@ public struct List<Element>: Collection {
     
     public subscript(idx: Index) -> Element {
         switch idx.node {
-        case .End:
-            fatalError("subscript out of range")
-        case let .Node(x, _) : return x
+        case .end: fatalError("subscript out of range")
+        case let .node(x, _) : return x
         }
+    }
+    
+    public func index(after idx: Index) -> Index {
+        switch idx.node {
+        case .end: fatalError("Subscript out of range")
+        case let .node(_, next): return Index(node: next, tag: idx.tag - 1)
+        }
+        
     }
 }
 
-extension List: ArrayLiteralConvertible {
+extension List: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: Element...) {
-        startIndex = ListIndex(node: elements.reverse().reduce(.End) {
+        startIndex = ListIndex(node: elements.reversed().reduce(.end) {
             $0.cons($1)
             }, tag: elements.count)
-        endIndex = ListIndex(node: .End, tag: 0)
+        endIndex = ListIndex(node: .end, tag: 0)
+    }
+}
+
+extension List: CustomStringConvertible {
+    public var description: String {
+        let elements = self.map { String(describing: $0) }
+            .joined(separator:";")
+        return "List(\(elements))"
     }
 }
 
@@ -61,6 +74,6 @@ extension List {
     }
 }
 
-//public func == <T>(lhs:List<T>, rhs:List<T>) -> Bool {
-//    return lhs.elementsEqual(rhs, isEquivalent: ==)
-//}
+public func == <T:Equatable>(lhs:List<T>, rhs:List<T>) -> Bool {
+    return lhs.elementsEqual(rhs)
+}
